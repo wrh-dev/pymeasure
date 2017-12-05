@@ -22,6 +22,30 @@
 # THE SOFTWARE.
 #
 
-from .keithley2000 import Keithley2000
-from .keithley2400 import Keithley2400
-from .keithley2700 import Keithley2700
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import (
+    truncated_range, truncated_discrete_set,
+    strict_discrete_set
+)
+from pymeasure.adapters import VISAAdapter
+
+
+class Keithley2700(Instrument):
+    """ Represents the Keithley 2700 Data Acquisition System and provides a 
+    high-level interface for interacting with the instrument.
+
+    .. code-block:: python
+
+        meter = Keithley2700("GPIB::1")
+        meter.measure_voltage()
+        print(meter.voltage)
+
+    """
+    def __init__(self, adapter, **kwargs):
+        super(Keithley2700, self).__init__(
+            adapter, "Keithley 2700 Data Acquisition System", **kwargs
+        )
