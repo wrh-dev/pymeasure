@@ -40,7 +40,7 @@ log.addHandler(logging.NullHandler())
 """
 
 
-class KeithleyData(object):
+class KeithleyData:
     """
     Helper class for parsing data transfers from Keithley 2700 MultiMeter.
 
@@ -59,7 +59,17 @@ class KeithleyData(object):
     UNITS = ['ADC', 'AAC', 'VDC', 'VAC', 'SECS', 'HZ', 'SEC', 'RDNG#', 'LIMITS']
 
     def __init__(self, data_string, elements, format_string='ascii', byte_order='normal'):
-        print(elements)
+        """
+        Parse a Keithley2700 data string for all contained information. The following attributes are populated if they
+        are found in the data string: :attr:`~.KeithleyData.readings`, :attr:`~.KeithleyData.timestamps`,
+        :attr:`~.KeithleyData.reading_numbers`, :attr:`~.KeithleyData.channels`, :attr:`~.KeithleyData.limits_high2`,
+        :attr:`~.KeithleyData.limits_low2`, :attr:`~.KeithleyData.limits_high1`, :attr:`~.KeithleyData.limits_low1`.
+
+        :param data_string: string corresponding to the data returned from Keithley2700
+        :param elements: list of :attr:`~.Keithley2700.data_elements` used for data transfers
+        :param format_string: string representing the :attr:`~.Keithley2700.data_format` used for data transfers
+        :param byte_order: string representing the :attr:`~.Keithley2700.byte_order` used for data transfers
+        """
         self.data_string = data_string  # reading,timestamp,reading_number,channel,limit (if all included)
         self.elements = elements
         self.format_string = format_string
@@ -113,6 +123,11 @@ class KeithleyData(object):
             raise NotImplementedError("Binary data formats not currently supported")
 
     def __str__(self):
+        """
+        Returns a string representation that shows all possible data fields for a Keithley2700 data response.
+
+        :return: A string representation of all possible data fields for a Keithley2700 data response
+        """
         return (
             'Readings: {}\n'
             'Timestamps: {}\n'
@@ -187,10 +202,10 @@ class Keithley2700(Instrument):
     mode = Instrument.control(
         "SENS:FUNC?", "SENS:FUNC '%s'",
         """A string property that controls the configuration mode for measurements,
-        which can take the values: :attr:'current' (DC), :attr:'current ac', 
-        :attr:'voltage' (DC),  :attr:'voltage ac', :attr:'resistance' (2-wire), 
-        :attr:'resistance 4W' (4-wire), :attr:'period', :attr:'frequency', 
-        :attr:'temperature', and :attr:'continuity'.""",
+        which can take the values: ``'current'`` (DC), ``'current ac'``, 
+        ``'voltage'`` (DC),  ``'voltage ac'``, ``'resistance'`` (2-wire), 
+        ``'resistance 4W'`` (4-wire), ``'period'``, ``'frequency'``, 
+        ``'temperature'``, and ``'continuity'``.""",
         validator=strict_discrete_set,
         values=MODES,
         map_values=True,
@@ -199,8 +214,8 @@ class Keithley2700(Instrument):
 
     data_format = Instrument.control(
         "FORMat:DATA?", "FORMat:DATA '%s'",
-        """A string property that controls the data transfer format, which can take the values: :attr:'ascii' (for 
-        ASCII text-based transfer), :attr:'single' (for IEEE-754 single precision format) or :attr:'double' (for
+        """A string property that controls the data transfer format, which can take the values: ``'ascii'`` (for 
+        ASCII text-based transfer), ``'single'`` (for IEEE-754 single precision format) or ``'double'`` (for
         IEEE-754 double precision format).""",
         validator=strict_discrete_set,
         values=DATA_FORMAT,
@@ -209,8 +224,8 @@ class Keithley2700(Instrument):
 
     byte_order = Instrument.control(
         "FORMat:BORDer?", "FORMat:BORDer %s",
-        """A string property that controls the data transfer byte order, which can take the values: :attr:'normal' or 
-        :attr:'swapped'.""",
+        """A string property that controls the data transfer byte order, which can take the values: ``'normal'`` or 
+        ``'swapped'``.""",
         validator=strict_discrete_set,
         values=BYTE_ORDER,
         map_values=True
@@ -227,8 +242,9 @@ class Keithley2700(Instrument):
     @property
     def data_elements(self):
         """
-        Reads the data elements used for data transfers. The following are possible elements: :attr:'readings',
-        :attr:'timestamp', :attr:'units': :attr:'reading_number', :attr:'channel', :attr:'limits'.
+        Reads the data elements used for data transfers. The following are possible elements: ``'readings'``,
+        ``'timestamp'``, ``'units'``, ``'reading_number'``, ``'channel'``, ``'limits'``.
+
         :return: list containing all data transfer elements
         """
         element_string = self.ask('FORMat:ELEMents?')
@@ -239,8 +255,9 @@ class Keithley2700(Instrument):
     @data_elements.setter
     def data_elements(self, elements):
         """
-        Writes the data elements used for data transfers. The following are possible elements: :attr:'readings',
-        :attr:'timestamp', :attr:'units': :attr:'reading_number', :attr:'channel', :attr:'limits'.
+        Writes the data elements used for data transfers. The following are possible elements: ``'readings'``,
+        ``'timestamp'``, ``'units'``, ``'reading_number'``, ``'channel'``, ``'limits'``.
+
         :param elements: list or tuple of strings containing desired data elements to include in data transfers
         :return: None
         """
@@ -252,9 +269,10 @@ class Keithley2700(Instrument):
     @property
     def range(self):
         """
-        Reads the range setting for the current mode. This property is not valid for the :attr:'period',
-        :attr:'frequency', :attr:'continuity', and :attr:'temperature' modes and will raise a ValueError if called
-        when in these modes.
+        Reads the range setting for the current :attr:`~.Keithley2700.mode`. This property is not valid for the
+        ``'period'``, ``'frequency'``, ``'continuity'``, and ``'temperature'`` modes and will raise a ValueError if
+        called when in these modes.
+
         :return: float corresponding to the current range
         """
         mode = self.mode
@@ -266,9 +284,10 @@ class Keithley2700(Instrument):
     @range.setter
     def range(self, value):
         """
-        Writes the range setting for the current mode. This property is not valid for the :attr:'period',
-        :attr:'frequency', :attr:'continuity', and :attr:'temperature' modes and will raise a ValueError if called
-        when in these modes.
+        Writes the range setting for the current :attr:`~.Keithley2700.mode`. This property is not valid for the
+        ``'period'``, ``'frequency'``, ``'continuity'``, and ``'temperature'`` modes and will raise a ValueError if
+        called when in these modes.
+
         :param value: range to apply
         :return: None
         """
@@ -282,9 +301,10 @@ class Keithley2700(Instrument):
     @property
     def auto_range(self):
         """
-        Reads the auto range setting for the active mode. This property is not valid for the :attr:'period',
-        :attr:'frequency', :attr:'continuity', and :attr:'temperature' modes and will raise a ValueError if called
-        when in these modes.
+        Reads the auto range setting for the active :attr:`~.Keithley2700.mode`. This property is not valid for the
+        ``'period'``, ``'frequency'``, ``'continuity'``, and ``'temperature'`` modes and will raise a ValueError if
+        called when in these modes.
+
         :return: boolean corresponding to current auto range setting
         """
         mode = self.mode
@@ -296,9 +316,10 @@ class Keithley2700(Instrument):
     @auto_range.setter
     def auto_range(self, enable):
         """
-        Writes the auto range setting for the active mode. This property is not valid for the :attr:'period',
-        :attr:'frequency', :attr:'continuity', and :attr:'temperature' modes and will raise a ValueError if called
+        Writes the auto range setting for the active :attr:`~.Keithley2700.mode`. This property is not valid for the
+        ``'period', ``'frequency'``, ``'continuity'``, and ``'temperature'`` modes and will raise a ValueError if called
         when in these modes.
+
         :param enable: boolean corresponding to desired auto range setting
         :return: None
         """
@@ -312,8 +333,10 @@ class Keithley2700(Instrument):
     @property
     def digits(self):
         """
-        Reads the range setting for the active mode. This property is not valid for the :attr:'continuity' mode
-        and will raise a ValueError if called when in this mode.
+        Reads the range setting for the active :attr:`~.Keithley2700.mode`. This property is not valid for the
+        ``'continuity'`` :attr:`~.Keithley2700.mode` and will raise a ValueError if called when in this
+        :attr:`~.Keithley2700.mode`.
+
         :return: float corresponding to the current digits setting
         """
         mode = self.mode
@@ -325,8 +348,10 @@ class Keithley2700(Instrument):
     @digits.setter
     def digits(self, value):
         """
-        Writes the range setting for the active mode. This property is not valid for the :attr:'continuity' mode and
-        will raise a ValueError if called when in this mode.
+        Writes the range setting for the active :attr:`~.Keithley2700.mode`. This property is not valid for the
+        ``'continuity'`` :attr:`~.Keithley2700.mode` and will raise a ValueError if called when in this
+        :attr:`~.Keithley2700.mode`.
+
         :param value: digits setting value to apply (between 4 and 7)
         :return: None
         """
@@ -341,8 +366,10 @@ class Keithley2700(Instrument):
                               channel=False, limits=False, units=False, byte_order_normal=True):
         """
         Configures the data transfer format of the instrument. Using this function is equivalent to calling the
-        following properties: data_format, data_elements, byte_order
-        :param data_format: specifies the desired data transfer format (:attr:'ascii', :attr:'single' or :attr:'double')
+        following properties: :attr:`~.Keithley2700.data_format`, :attr:`~.Keithley2700.data_elements`,
+        :attr:`~.Keithley2700.byte_order`
+
+        :param data_format: specifies the desired data transfer format (``'ascii'``, ``'single'`` or ``'double'``)
         :param readings: boolean for the inclusion of readings in the data return
         :param timestamp: boolean for the inclusion of timestamps in the data return
         :param reading_number: boolean for the inclusion of reading numbers in the data return
@@ -371,17 +398,19 @@ class Keithley2700(Instrument):
 
     def one_shot_measurement(self, mode=None):
         """
-        Take a reading in :attr:'mode' (active mode if no :attr:'mode' provided) with default parameters. This command
-        is equivalent to changing the mode, setting trigger source to immediate, setting trigger count to 1 and
-        configuring measurement parameters to factory defaults.
-        :param mode: Desired mode for measurement.
+        Take a reading in `:attr:`~.Keithley2700.mode` (active :attr:`~.Keithley2700.mode` if None provided) with
+        default parameters. This command is equivalent to changing the :attr:`~.Keithley2700.mode`, setting trigger
+        source to immediate, setting trigger count to 1 and configuring measurement parameters to factory defaults.
+
+        :param mode: Desired :attr:`~.Keithley2700.mode` for measurement.
         :return: measurement string
         """
         return self.ask(':MEASure:{0}?'.format(self._mode_command(mode)))
 
     def multi_point_measurement(self, samples=1):
         """
-        Takes 'samples' readings in the active mode. Clears buffer buffer before called.
+        Takes ``samples`` readings in the active :attr:`~.Keithley2700.mode`. Clears buffer before called.
+
         :param samples: samples to acquire (1 - 55000)
         :return: measurement string
         """
